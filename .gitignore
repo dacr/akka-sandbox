@@ -1,0 +1,9 @@
+*.jar
+*.class
+dist/*
+target/
+*.pscala
+*~
+.classpath
+.project
+.cache
