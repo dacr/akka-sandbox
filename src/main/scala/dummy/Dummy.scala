@@ -56,7 +56,7 @@ object Dummy {
 	  val stoppingProcessor: Future[Boolean] = gracefulStop(processor, 10 seconds)
 	  Await.result(stoppingProcessor, 11 seconds)
 
-	  system.scheduler match { case x:Closeable => x.close() case _ => }
+	  //system.scheduler match { case x:Closeable => x.close() case _ => }
 	  
 	  val stoppingSimulator: Future[Boolean] = gracefulStop(simu, 10 seconds)
 	  Await.result(stoppingSimulator, 11 seconds)	  
@@ -64,7 +64,7 @@ object Dummy {
 	  system.shutdown()
 	  println("Finished")
 	} catch {
-	  case e: ActorTimeoutException => println("the actor wasn't stopped within 10 minutes")
+	  case e: ActorTimeoutException => println("the actor wasn't stopped within 10 second")
 	  case e: Exception => //e.printStackTrace()
 	}
   }
