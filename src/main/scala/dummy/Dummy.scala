@@ -47,6 +47,9 @@ object Dummy {
         .withRouter(RoundRobinRouter(10)),
         name="default")
 
+    // Strange... looks like this is never called although gracefulStop on simu and processor...
+    system.registerOnTermination( { println("all actors terminated"); system.shutdown } )
+        
     for(i <- 1 to 100) {
       processor ! DoItMessage("Do the job with ID#%d now".format(i))
     }
@@ -61,7 +64,7 @@ object Dummy {
 	  val stoppingSimulator: Future[Boolean] = gracefulStop(simu, 10 seconds)
 	  Await.result(stoppingSimulator, 11 seconds)	  
 	  
-	  system.shutdown()
+	  //system.shutdown()
 	  println("Finished")
 	} catch {
 	  case e: ActorTimeoutException => println("the actor wasn't stopped within 10 second")
