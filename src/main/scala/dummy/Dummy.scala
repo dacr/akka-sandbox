@@ -27,11 +27,14 @@ import java.io.Closeable
 
 sealed trait MyMessage
 case class DoItMessage(cmd:String) extends MyMessage
-case class EndMessage extends MyMessage
+case class DoneMessage extends MyMessage
 
 
 object Dummy {
   def main(args:Array[String]) {
+    
+    val howmanyjob=10*1000000
+    
 	import com.typesafe.config.ConfigFactory
     implicit val system=ActorSystem("DummySystem",ConfigFactory.load.getConfig("dummy"))
     
@@ -39,23 +42,25 @@ object Dummy {
         Props(new MySimulator(system))
         .withDispatcher("simu-dispatcher"),
         name="simulator")
-    
+
+    val appManager = system.actorOf(
+        Props(new ApplicationManager(system, howmanyjob))
+        .withDispatcher("simu-dispatcher"),
+        name="application-manager")
+
+        
     import akka.routing.RoundRobinRouter
     val processor = system.actorOf(
-        Props(new MyMessageProcessor(simu))
+        Props(new MyMessageProcessor(appManager, simu))
         .withDispatcher("workers-dispatcher")
         .withRouter(RoundRobinRouter(10)),
         name="default")
-
-    // Strange... looks like this is never called although gracefulStop on simu and processor...
-    system.registerOnTermination( { println("all actors terminated"); system.shutdown } )
         
-    for(i <- 1 to 100) {
+    for(i <- 1 to howmanyjob) {
       processor ! DoItMessage("Do the job with ID#%d now".format(i))
     }
-    //print("All jobs sent")
-	try {	  
-	  
+    print("All jobs sent")
+	/*try {
 	  val stoppingProcessor: Future[Boolean] = gracefulStop(processor, 10 seconds)
 	  Await.result(stoppingProcessor, 11 seconds)
 
@@ -69,25 +74,33 @@ object Dummy {
 	} catch {
 	  case e: ActorTimeoutException => println("the actor wasn't stopped within 10 second")
 	  case e: Exception => //e.printStackTrace()
-	}
+	}*/
   }
 }
 
-
-class MyMessageProcessor(simu:ActorRef) extends Actor {
+class MyMessageProcessor(appManager:ActorRef, simu:ActorRef) extends Actor {
   def receive = {
     case msg:DoItMessage =>
-      implicit val timeout = Timeout(10 seconds)
+      implicit val timeout = Timeout(5 minutes)
       val future = simu ? msg
-      future.onSuccess { 
-        case msg:String => print("O")
+      future.onComplete { 
+        case result:Either[Throwable, String] => appManager ! DoneMessage
       }
-      print("o")
   }
 }
 
 class MySimulator(system:ActorSystem) extends Actor {
   def receive = {
     case _:DoItMessage => system.scheduler.scheduleOnce(1000 milliseconds, sender, "Done") // Fake processing
+  }
+}
+
+class ApplicationManager(system:ActorSystem, howmanyjob:Int) extends Actor {
+  var count=0
+  def receive = {
+    case DoneMessage => 
+      count+=1
+      if (count%10000==0) println(count)
+      if (count == howmanyjob) system.shutdown() 
   }
 }
