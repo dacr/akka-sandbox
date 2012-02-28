@@ -60,21 +60,6 @@ object Dummy {
       processor ! DoItMessage("Do the job with ID#%d now".format(i))
     }
     print("All jobs sent")
-	/*try {
-	  val stoppingProcessor: Future[Boolean] = gracefulStop(processor, 10 seconds)
-	  Await.result(stoppingProcessor, 11 seconds)
-
-	  //system.scheduler match { case x:Closeable => x.close() case _ => }
-	  
-	  val stoppingSimulator: Future[Boolean] = gracefulStop(simu, 10 seconds)
-	  Await.result(stoppingSimulator, 11 seconds)	  
-	  
-	  //system.shutdown()
-	  println("Finished")
-	} catch {
-	  case e: ActorTimeoutException => println("the actor wasn't stopped within 10 second")
-	  case e: Exception => //e.printStackTrace()
-	}*/
   }
 }
 
@@ -82,25 +67,36 @@ class MyMessageProcessor(appManager:ActorRef, simu:ActorRef) extends Actor {
   def receive = {
     case msg:DoItMessage =>
       implicit val timeout = Timeout(5 minutes)
+      val receivedTime = System.currentTimeMillis()
       val future = simu ? msg
       future.onComplete { 
-        case result:Either[Throwable, String] => appManager ! DoneMessage
+        case result:Either[Throwable, String] =>
+          assert(System.currentTimeMillis()-receivedTime >= 1000)
+          appManager ! DoneMessage
       }
   }
 }
 
 class MySimulator(system:ActorSystem) extends Actor {
   def receive = {
-    case _:DoItMessage => system.scheduler.scheduleOnce(1000 milliseconds, sender, "Done") // Fake processing
+    case _:DoItMessage =>
+      // Fake processing, somewhere, the job is executed and we get 
+      // the results 1s later asynchronously
+      system.scheduler.scheduleOnce(1000 milliseconds, sender, "Done") 
   }
 }
 
 class ApplicationManager(system:ActorSystem, howmanyjob:Int) extends Actor {
+  val startedTime = System.currentTimeMillis()
   var count=0
   def receive = {
     case DoneMessage => 
       count+=1
-      if (count%10000==0) println(count)
-      if (count == howmanyjob) system.shutdown() 
+      if (count%(howmanyjob/20)==0) println("%d/%d processed".format(count, howmanyjob))
+      if (count == howmanyjob) {
+        val now=System.currentTimeMillis()
+        println("Everything processed in %d seconds".format((now-startedTime)/1000))
+        system.shutdown() 
+      }
   }
 }

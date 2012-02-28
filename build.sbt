@@ -10,7 +10,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "1.6.1" % "test"
 
 libraryDependencies += "junit" % "junit" % "4.10" % "test"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-RC2"
+libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-RC3"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
