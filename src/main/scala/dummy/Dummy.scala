@@ -19,11 +19,8 @@ package dummy
 import akka.actor._
 import akka.util.duration._
 import akka.util.Timeout
-import akka.dispatch.Await
 import akka.pattern.ask
-import akka.pattern.gracefulStop
 import akka.dispatch.Future
-import java.io.Closeable
 
 sealed trait MyMessage
 case class DoItMessage(cmd:String) extends MyMessage
