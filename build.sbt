@@ -2,17 +2,17 @@ import AssemblyKeys._
 
 name := "AkkaSandbox"
 
-version := "0.2"
+version := "0.3"
 
-scalaVersion := "2.9.1"
+scalaVersion := "2.9.2"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "1.6.1" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "1.8" % "test"
 
 libraryDependencies += "junit" % "junit" % "4.10" % "test"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0"
+libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0.2"
 
-libraryDependencies += "fr.janalyse"   %% "janalyse-ssh" % "0.7.0" % "compile"
+libraryDependencies += "fr.janalyse"   %% "janalyse-ssh" % "0.8.0" % "compile"
 
 
 resolvers += "JAnalyse Repository" at "http://www.janalyse.fr/repository/"
